@@ -14,11 +14,17 @@ app.use(express.json());
 
 // Detectar entorno
 const isDev = process.env.NODE_ENV === "development";
+const isProd = process.env.NODE_ENV === "production";
 
-// Sincronización inteligente
+// Sincronización segura
+// - En producción: NUNCA borra tablas, solo crea las que no existan
+// - En desarrollo: con FORCE_SYNC=true borra y recrea (útil para pruebas locales)
 await db.sequelize.sync({
-  force: isDev
+  force: isDev && process.env.FORCE_SYNC === "true",
+  alter: false
 });
+
+console.log(`🛡️  Modo de sincronización: ${isProd ? "producción (segura)" : "desarrollo"}`);
 
 // Inicializar roles (solo si no existen)
 const count = await db.role.count();
